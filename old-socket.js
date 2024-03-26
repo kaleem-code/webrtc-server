@@ -13,14 +13,12 @@ module.exports.initIO = (httpServer) => {
   });
 
   IO.on("connection", (socket) => {
-    // console.log(socket.user, "Connected");
+    console.log(socket.user, "Connected");
     socket.join(socket.user);
 
     socket.on("call", (data) => {
       let calleeId = data.calleeId;
       let rtcMessage = data.rtcMessage;
-
-      console.log("call:", { calleeId });
 
       socket.to(calleeId).emit("newCall", {
         callerId: socket.user,
@@ -31,8 +29,6 @@ module.exports.initIO = (httpServer) => {
     socket.on("answerCall", (data) => {
       let callerId = data.callerId;
       rtcMessage = data.rtcMessage;
-
-      console.log("call:", { callerId });
 
       socket.to(callerId).emit("callAnswered", {
         callee: socket.user,
@@ -45,10 +41,14 @@ module.exports.initIO = (httpServer) => {
       let calleeId = data.calleeId;
       let rtcMessage = data.rtcMessage;
 
-      socket.to(calleeId).emit("ICEcandidate", {
-        sender: socket.user,
-        rtcMessage: rtcMessage,
-      });
+      if (socket.user === calleeId) {
+        // Emit the ICE candidate data only if the user matches the callee
+        console.log("socket.user emit", socket.user);
+        socket.to(calleeId).emit("ICEcandidate", {
+          sender: socket.user,
+          rtcMessage: rtcMessage,
+        });
+      }
     });
 
     socket.on("callCancelled", (data) => {
